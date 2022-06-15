@@ -2,18 +2,42 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "copy amxx to server",
+			"type": "shell",
+			"command": "Get-ChildItem -Path \"${workspaceFolder}/compiled\" -Include *.amxx -Recurse | Copy-Item -Destination \"${workspaceFolder}/../../plugins\"",
+			"presentation": {
+				"focus": false,
+				"panel": "shared",
+				"clear": true
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "mkdir compiled",
+			"type": "shell",
+			"command": "New-Item -ItemType Directory -Force -Path \"${workspaceFolder}/compiled\"",
+			"isBackground": true,
+			"presentation": {
+				"reveal": "silent",
+				"close": true,
+				"focus": false,
+				"panel": "shared",
+				"clear": true
+			}
+		},
+		{
 			"label": "build-normal",
 			"type": "shell",
-			"command": "C:/Server/cs16/cstrike/addons/amxmodx/scripting/amxxpc.exe",
+			"command": "${workspaceFolder}/../amxxpc.exe",
 			"runOptions": {
 				"instanceLimit": 1
 			},
 			"args": [
 				"${file}",
-				"-i\"C:/Server/cs16/cstrike/addons/amxmodx/scripting/include\"",
-				"-i\"C:/Server/cs16/cstrike/addons/amxmodx/scripting/contagion/include\"",
-				"-o\"C:/Server/cs16/cstrike/addons/amxmodx/scripting/contagion/compiled/${fileBasenameNoExtension}.amxx\"",
-				"-D\"C:/Server/cs16/cstrike/addons/amxmodx/scripting/contagion\""
+				"-i\"${workspaceFolder}/../include\"",
+				"-i\"${workspaceFolder}/include\"",
+				"-o\"${workspaceFolder}/compiled/${fileBasenameNoExtension}.amxx\"",
+				"-D\"${workspaceFolder}\""
 			],
 			"group": {
 				"kind": "build",
@@ -21,9 +45,11 @@
 			},
 			"isBackground": false,
 			"presentation": {
+				"echo": false,
 				"reveal": "always",
 				"panel": "dedicated",
-				"clear": true
+				"clear": true,
+				"showReuseMessage": true
 			},
 			"problemMatcher": {
 				"owner": "pawn",
@@ -38,7 +64,8 @@
 					"severity": 3,
 					"message": 4
 				}
-			}
+			},
+			"dependsOn": "mkdir compiled"
 		}
 	],
 }

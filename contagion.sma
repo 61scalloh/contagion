@@ -10,6 +10,7 @@
 
 #include "playerclass.pwn"
 #include "player.pwn"
+#include "manager.pwn"
 #include "utils.pwn"
 
 public oo_init()
@@ -22,4 +23,16 @@ public oo_init()
 public plugin_init()
 {
     register_plugin("Contagion", "0.1", "colgay");
+
+    ManagerInit();
+}
+
+public client_connectex(id)
+{
+    @call :g_PlayerManager.Connect(id);
+}
+
+public client_disconnected(id)
+{
+    @call :g_PlayerManager.Disconnect(id);
 }

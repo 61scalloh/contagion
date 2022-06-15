@@ -44,6 +44,7 @@ native oo_decl_ivar(const class[], const name[], size);
 native oo_isa(any:this, const _super[]);
 native bool:oo_subclass_of(const sub[], const _super[]);
 native bool:oo_class_exists(const class[]);
+native oo_get_class_name(any:this, classname[], len);
 
 native any:oo_new(const class[], any: ...);
 native oo_delete(any:this);
@@ -56,5 +57,3 @@ native any:oo_this();
 
 //native oo_this_ctor(any: ...);
 native oo_super_ctor(const _super[], any: ...);
-
-native oo_get_class_name(any:this, classname[], len);
