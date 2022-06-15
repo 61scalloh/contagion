@@ -1,0 +1,2 @@
+#tryinclude <amxmodx>
+#tryinclude <oo>
