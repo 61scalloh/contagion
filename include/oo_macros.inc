@@ -39,14 +39,14 @@
 // @gets(object.var[] >> string_out[size]) // string
 #define @get(%0.%1)							oo_read(%0, #%1)
 #define @geta(%0.%1[%2..%3]>>%4[%5..%6]) 	oo_read(%0, #%1, %2, %3, %4, %5, %6)
-#define @gets(%0.%1[]>>%2[%3]) 				oo_read(%0, #%1, %2, %3)
+#define @gets(%0.%1[]>>%2[%3]) 				oo_read(%0, #%1, 0, %3, %2, 0, %3)
 
 // @set(object.var. = value) // cell
 // @seta(object.var[begin..end] << array_value[begin..end]) // array
 // @sets(object.var[] << "string") // string
 #define @set(%0.%1:=%2)						oo_write(%0, #%1, %2)
 #define @seta(%0.%1[%2..%3]<<%4[%5..%6])	oo_write(%0, #%1, %2, %3, %4, %5, %6)
-#define @sets(%0.%1[]<<%2)					oo_write(%0, #%1, %2)
+#define @sets(%0.%1[]<<%2)					oo_write(%0, #%1, 0, 0, %2, 0, 0)
 
 #define @call:%0.%1(%2)			oo_send(%0, #%1, %2)
 #define @call0:%0.%1()			oo_send(%0, #%1)

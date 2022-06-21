@@ -24,11 +24,11 @@ PlayerClassOO()
 		@construct :Ctor(@string, @string, @cell, @cell);
 		@destruct  :Dtor();
 
-		// (const name[], const string[], flags, const description[])
+		// (const name[], const string[], flags, const desc[])
 		@method :CreateCvar(@string, @string, @cell, @string);
 
 		@method0 :LoadAssets();
-		@method  :LoadJson(@string); // (const filename[])
+		@method  :LoadJson(@string); // (const fileName[])
 	}
 
 	@class ("PlayerClass")
@@ -38,7 +38,7 @@ PlayerClassOO()
 		@var (OO_CELL:m_oPlayer); // Obj:
 		@var (OO_CELL:m_oClassInfo); // Obj:
 
-		@construct :Ctor(@cell); // (Obj:player_obj)
+		@construct :Ctor(@cell); // (Obj:oPlayer)
 		@destruct  :Dtor();
 
 		@method0 :GetPlayerIndex();
@@ -50,10 +50,14 @@ PlayerClassOO()
 		// (channel, const sample[], Float:volume, Float:attn, flags, pitch)
 		@method :ChangeSound(@cell, @string, @float, @float, @cell, @cell);
 	}
+
+	PlayerClassesOO();
 }
 
-public PlayerClassInfo@Ctor(const name[], const desc[], team, flags)
+public PlayerClassInfo@Ctor(const name[], const desc[], PlayerTeam:team, flags)
 {
+	server_print("call PlayerClassInfo@Ctor()");
+
 	@init_this(this);
 
 	@sets (this.m_Name[] << name);
@@ -72,30 +76,30 @@ public PlayerClassInfo@Ctor(const name[], const desc[], team, flags)
 
 public PlayerClassInfo@Dtor() {}
 
-public PlayerClassInfo@CreateCvar(const name[], const string[], flags, const description[])
+public PlayerClassInfo@CreateCvar(const name[], const string[], flags, const desc[])
 {
 	@init_this(this);
 
-	static cvar_name[50], class_name[32];
-	@gets (this.m_Name[] >> class_name[32]);
-	strtolower(class_name);
+	static cvarName[50], className[32];
+	@gets (this.m_Name[] >> className[32]);
+	strtolower(className);
 
-	formatex(cvar_name, charsmax(cvar_name), "ctg_%s_%s", class_name, name);
-	TrieSetCell(Trie:@get(this.m_Cvars), name, create_cvar(cvar_name, string, flags, description));
+	formatex(cvarName, charsmax(cvarName), "ctg_%s_%s", className, name);
+	TrieSetCell(Trie:@get(this.m_Cvars), name, create_cvar(cvarName, string, flags, desc));
 }
 
 public PlayerClassInfo@LoadAssets() // override this
 {
-	@call: _this.LoadJson("player");
+	@call :_this.LoadJson("player");
 }
 
-public PlayerClassInfo@LoadJson(const filename[])
+public PlayerClassInfo@LoadJson(const fileName[])
 {
 	@init_this(this);
 
 	static path[100];
 	get_configsdir(path, charsmax(path));
-	format(path, charsmax(path), "%s/contagion/playerclass/%s.json", path, filename);
+	format(path, charsmax(path), "%s/contagion/playerclass/%s.json", path, fileName);
 
 	new JSON:json = json_parse(path, true, true);
 	if (json != Invalid_JSON)
@@ -103,21 +107,21 @@ public PlayerClassInfo@LoadJson(const filename[])
 		static key[128], value[128];
 
 		// load player models
-		new JSON:models = json_object_get_value(json, "models");
-		if (models != Invalid_JSON)
+		new JSON:models_json = json_object_get_value(json, "models");
+		if (models_json != Invalid_JSON)
 		{
 			new Array:aModels = Array:@get(this.m_Models);
-			for (new i = json_array_get_count(models) - 1; i >= 0; i--)
+			for (new i = json_array_get_count(models_json) - 1; i >= 0; i--)
 			{
-				json_array_get_string(models, i, value, charsmax(value));
+				json_array_get_string(models_json, i, value, charsmax(value));
 				ArrayPushString(aModels, value);
 				PrecachePlayerModel(value);
 			}
-			json_free(models);
+			json_free(models_json);
 		}
 
 		// load view models
-		new JSON:vmodels_json = json_object_get_value(json, "vmodels_json");
+		new JSON:vmodels_json = json_object_get_value(json, "v_models");
 		if (vmodels_json != Invalid_JSON)
 		{
 			new JSON:vmodel_val = Invalid_JSON;
@@ -136,7 +140,7 @@ public PlayerClassInfo@LoadJson(const filename[])
 		}
 
 		// load 3rd person models
-		new JSON:pmodel_json = json_object_get_value(json, "pmodel_json");
+		new JSON:pmodel_json = json_object_get_value(json, "p_models");
 		if (pmodel_json != Invalid_JSON)
 		{
 			new JSON:pmodel_val = Invalid_JSON;
@@ -155,39 +159,41 @@ public PlayerClassInfo@LoadJson(const filename[])
 		}
 
 		// load sound_json
-		new JSON:sound_json = json_object_get_value(json, "sound_json");
+		new JSON:sound_json = json_object_get_value(json, "sounds");
 		if (sound_json != Invalid_JSON)
 		{
-			new Array:sound_arr = Invalid_Array;
+			new Array:aSounds = Invalid_Array;
 			new JSON:sound_val = Invalid_JSON;
 			new Trie:sound_trie = Trie:@get(this.m_Sounds);
 			for (new i = json_object_get_count(sound_json) - 1; i >= 0; i--)
 			{
 				json_object_get_name(sound_json, i, key, charsmax(key));
 				sound_val = json_object_get_value_at(sound_json, i);
-				sound_arr = ArrayCreate(100);
+				aSounds = ArrayCreate(100);
 				for (new i = json_array_get_count(sound_val) - 1; i >= 0; i--)
 				{
 					json_array_get_string(sound_val, i, value, charsmax(value));
-					ArrayPushString(sound_arr, value);
+					ArrayPushString(aSounds, value);
 					if (value[0])
 						precache_sound(value);
 				}
 				json_free(sound_val);
-				TrieSetCell(sound_trie, key, sound_arr);
+				TrieSetCell(sound_trie, key, aSounds);
 			}
 			json_free(sound_json);
 		}
 
 		json_free(json);
+
+		server_print("PlayerClass@LoadJson(%s)", fileName);
 	}
 }
 
 // constructor
-public PlayerClass@Ctor(Object:player_obj)
+public PlayerClass@Ctor(Object:oPlayer)
 {
 	@init_this(this);
-	@set (this.m_oPlayer: = player_obj);
+	@set (this.m_oPlayer: = oPlayer);
 	@call0 :this.AssignClassInfo();
 }
 
@@ -196,11 +202,11 @@ public PlayerClass@Dtor() {}
 // Get player index
 public PlayerClass@GetPlayerIndex()
 {
-	new Player:player_obj = any:@get(_this.m_oPlayer);
-	if (player_obj == @null)
+	new Player:oPlayer = any:@get(_this.m_oPlayer);
+	if (oPlayer == @null)
 		return 0;
 	
-	return @get(player_obj.m_PlayerId);
+	return @get(oPlayer.m_PlayerIndex);
 }
 
 // Assign player class info
@@ -213,28 +219,28 @@ public PlayerClass@SetProperties()
 {
 	@init_this(this);
 
-	new PlayerClassInfo:info_obj = any:@get(this.m_oClassInfo);
-	if (info_obj == @null)
+	new PlayerClassInfo:oInfo = any:@get(this.m_oClassInfo);
+	if (oInfo == @null)
 		return;
 
 	new id = @call0:this.GetPlayerIndex();
-	new Trie:tcvars = Trie:@get(info_obj.m_Cvars);
-	new pcvar;
+	new Trie:tCvars = Trie:@get(oInfo.m_Cvars);
+	new pCvar;
 
 	// has health
-	if (TrieGetCell(tcvars, "hp", pcvar))
-		set_user_health(id, get_pcvar_num(pcvar));
+	if (TrieGetCell(tCvars, "health", pCvar))
+		set_user_health(id, get_pcvar_num(pCvar));
 
 	// has gravity
-	if (TrieGetCell(tcvars, "gravity", pcvar))
-		set_user_gravity(id, get_pcvar_float(pcvar));
+	if (TrieGetCell(tCvars, "gravity", pCvar))
+		set_user_gravity(id, get_pcvar_float(pCvar));
 
-	new Array:model_arr = Array:@get(info_obj.m_Models);
-	new model_size = ArraySize(model_arr);
-	if (model_size > 0) // has model
+	new Array:aModel = Array:@get(oInfo.m_Models);
+	new modelSize = ArraySize(aModel);
+	if (modelSize > 0) // has model
 	{
 		static buffer[32];
-		ArrayGetString(model_arr, random(model_size), buffer, charsmax(buffer));
+		ArrayGetString(aModel, random(modelSize), buffer, charsmax(buffer));
 		cs_set_user_model(id, buffer);
 	}
 
@@ -244,70 +250,102 @@ public PlayerClass@SetProperties()
 	if (pev_valid(ent)) ExecuteHamB(Ham_Item_Deploy, ent); // update weapon model
 }
 
-public PlayerClass@SetMaxSpeed()
+public bool:PlayerClass@SetMaxSpeed()
 {
 	@init_this(this);
 
-	new PlayerClassInfo:info_obj = any:@get(this.m_oClassInfo);
-	if (info_obj == @null)
-		return;
-
-	new id = @call0:this.GetPlayerIndex();
-	new Trie:tcvars = Trie:@get(info_obj.m_Cvars);
-	new pcvar;
-
-	if (TrieGetCell(tcvars, "speed", pcvar)) // has maxspeed
-	{
-		new Float:speed = get_pcvar_float(pcvar);
-		set_user_maxspeed(id, (speed < 5.0) ? get_user_maxspeed(id) * speed : speed);
-	}
-}
-
-public PlayerClass@SetWeaponModel(ent)
-{
-	@init_this(this);
-
-	new PlayerClassInfo:info_obj = any:@get(this.m_oClassInfo);
-	if (info_obj == @null)
-		return;
-
-	static classname[32], model[100];
-	pev(ent, pev_classname, classname, charsmax(classname));
-
-	new id = @call0:this.GetPlayerIndex();
-
-	// has v_model
-	if (TrieGetString(Trie:@get(info_obj.m_vModels), classname, model, charsmax(model)))
-	{
-		set_pev(id, pev_viewmodel2, model);
-	}
-
-	// has p_model
-	if (TrieGetString(Trie:@get(info_obj.m_pModels), classname, model, charsmax(model)))
-	{
-		set_pev(id, pev_weaponmodel2, model);
-	}
-}
-
-// return true for blocking the original EmitSound() forward
-public bool:PlayerClass@ChangeSound(channel, const sample[], &Float:volume, Float:attenuation, flags, pitch)
-{
-	@init_this(this);
-
-	new PlayerClassInfo:info_obj = any:@get(this.m_oClassInfo);
-	if (info_obj == @null)
+	new PlayerClassInfo:oInfo = any:@get(this.m_oClassInfo);
+	if (oInfo == @null)
 		return false;
 
-	static sound[100], Array:sound_arr;
+	new id = @call0:this.GetPlayerIndex();
+	new Trie:tCvars = Trie:@get(oInfo.m_Cvars);
+	new pCvar;
 
-	// has sound
-	if (TrieGetCell(Trie:@get(info_obj.m_Sounds), sample, sound_arr))
+	if (TrieGetCell(tCvars, "speed", pCvar)) // has maxspeed
 	{
-		new id = @call0:this.GetPlayerIndex();
-		ArrayGetString(sound_arr, random(ArraySize(sound_arr)), sound, charsmax(sound));
-		emit_sound(id, channel, sound, volume, attenuation, flags, pitch);
+		new Float:speed = get_pcvar_float(pCvar);
+		set_user_maxspeed(id, (speed < 5.0) ? get_user_maxspeed(id) * speed : speed);
 		return true;
 	}
 
 	return false;
+}
+
+public bool:PlayerClass@SetWeaponModel(ent)
+{
+	@init_this(this);
+
+	new PlayerClassInfo:oInfo = any:@get(this.m_oClassInfo);
+	if (oInfo == @null)
+		return false;
+
+	static className[32], model[100];
+	entity_get_string(ent, EV_SZ_classname, className, charsmax(className));
+
+	new id = @call0:this.GetPlayerIndex();
+
+	// has v_model
+	if (TrieGetString(Trie:@get(oInfo.m_vModels), className, model, charsmax(model)))
+	{
+		//server_print("id(%d) className(%s)", id, className);
+		set_pev(id, pev_viewmodel2, model);
+		return true;
+	}
+
+	// has p_model
+	if (TrieGetString(Trie:@get(oInfo.m_pModels), className, model, charsmax(model)))
+	{
+		set_pev(id, pev_weaponmodel2, model);
+		return true;
+	}
+
+	return false;
+}
+
+// return true for blocking the original EmitSound() forward
+public bool:PlayerClass@ChangeSound(channel, const sample[], Float:volume, Float:attn, flags, pitch)
+{
+	@init_this(this);
+
+	new PlayerClassInfo:oInfo = any:@get(this.m_oClassInfo);
+	if (oInfo == @null)
+		return false;
+
+	static sound[100], Array:aSound;
+
+	// has sound
+	if (TrieGetCell(Trie:@get(oInfo.m_Sounds), sample, aSound))
+	{
+		//server_print("pass");
+		new id = @call0:this.GetPlayerIndex();
+		ArrayGetString(aSound, random(ArraySize(aSound)), sound, charsmax(sound));
+		emit_sound(id, channel, sound, volume, attn, flags, pitch);
+		return true;
+	}
+
+	return false;
+}
+
+// --------------------------------------
+
+#include "playerclass/human.pwn"
+#include "playerclass/zombie.pwn"
+
+PlayerClassesOO()
+{
+	HumanOO();
+	ZombieOO();
+}
+
+PlayerClassPrecache()
+{
+	HumanPrecache();
+	ZombiePrecache();
+}
+
+PlayerClassInit()
+{
+	HumanInit();
+	ZombieInit();
 }

@@ -39,28 +39,28 @@ public Player@Dtor()
 }
 
 // Change player class
-public Player@ChangeClass(const dest_class[])
+public Player@ChangeClass(const destClass[])
 {
 	@init_this(this);
 
-	new PlayerClass:class_obj = any:@get(this.m_oClass);
-	if (class_obj != @null)
+	new PlayerClass:oClass = any:@get(this.m_oClass);
+	if (oClass != @null)
 	{
 		// delete old player class
-		@delete (class_obj);
+		@delete (oClass);
 		@set (this.m_oClass: = @null);
 	}
 
-	// safe check: if dest_class is vaild
-	if (oo_class_exists(dest_class) && oo_subclass_of(dest_class, "PlayerClass"))
+	// safe check: if destClass is vaild
+	if (oo_class_exists(destClass) && oo_subclass_of(destClass, "PlayerClass"))
 	{
-		class_obj = @new (dest_class, this); // new object
-		@set (this.m_oClass: = class_obj); // assign to the player
+		oClass = @new (destClass, this); // new object
+		@set (this.m_oClass: = oClass); // assign to the player
 
-		new PlayerClassInfo:o_info = any:@get(class_obj.m_oClassInfo);
+		new PlayerClassInfo:o_info = any:@get(oClass.m_oClassInfo);
 		@set (this.m_Team: = @get(o_info.m_Team)); // set player team
 
-		@call0 :class_obj.SetProperties(); // set player properties
+		@call0 :oClass.SetProperties(); // set player properties
 	}
 }
 

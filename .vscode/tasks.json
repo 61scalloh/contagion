@@ -7,26 +7,12 @@
 			"command": "Get-ChildItem -Path \"${workspaceFolder}/compiled\" -Include *.amxx -Recurse | Copy-Item -Destination \"${workspaceFolder}/../../plugins\"",
 			"presentation": {
 				"focus": false,
-				"panel": "shared",
-				"clear": true
+				"panel": "shared"
 			},
 			"problemMatcher": []
 		},
 		{
-			"label": "mkdir compiled",
-			"type": "shell",
-			"command": "New-Item -ItemType Directory -Force -Path \"${workspaceFolder}/compiled\"",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "silent",
-				"close": true,
-				"focus": false,
-				"panel": "shared",
-				"clear": true
-			}
-		},
-		{
-			"label": "build-normal",
+			"label": "compile",
 			"type": "shell",
 			"command": "${workspaceFolder}/../amxxpc.exe",
 			"runOptions": {
@@ -64,8 +50,7 @@
 					"severity": 3,
 					"message": 4
 				}
-			},
-			"dependsOn": "mkdir compiled"
+			}
 		}
 	],
 }
