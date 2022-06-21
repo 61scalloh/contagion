@@ -1,4 +1,4 @@
-public client_connectex(id)
+public client_connect(id)
 {
 	@call :g_oPlayerManager.Connect(id);
 }

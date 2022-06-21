@@ -43,8 +43,15 @@ public plugin_init()
 
 public CmdSetPlayerClass(id)
 {
-	new class[32]
-	read_argv(1, class, charsmax(class));
+	static arg[32];
+	read_argv(1, arg, charsmax(arg));
+
+	new player = cmd_target(id, arg);
+	if (!player)
+		return PLUGIN_HANDLED;
+	
+	static class[32];
+	read_argv(2, class, charsmax(class));
 
 	if (!oo_class_exists(class))
 	{
@@ -58,7 +65,7 @@ public CmdSetPlayerClass(id)
 		return PLUGIN_HANDLED;
 	}
 
-	new Player:oPlayer = any:@call:g_oPlayerManager.PlayerOfIndex(id);
+	new Player:oPlayer = any:@call:g_oPlayerManager.PlayerOfIndex(player);
 	@call :oPlayer.ChangeClass(class);
 	
 	return PLUGIN_HANDLED;
