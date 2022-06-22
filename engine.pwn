@@ -8,7 +8,7 @@ public OnFmEmitSound(id, channel, const sample[], Float:volume, Float:attn, flag
 	if (!is_user_alive(id))
 		return FMRES_IGNORED;
 
-	if (@call:g_oPlayerManager.EmitSound(id, channel, sample, volume, attn, flags, pitch))
+	if (Player_EmitSound(id, channel, sample, volume, attn, flags, pitch))
 		return FMRES_SUPERCEDE;
 
 	return FMRES_IGNORED;

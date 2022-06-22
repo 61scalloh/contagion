@@ -1,0 +1,123 @@
+#if defined _ctg_manager_included
+	#endinput
+#endif
+
+#define _ctg_manager_included
+
+new Player:g_oPlayers[MAX_PLAYERS + 1];
+
+ManagerOO()
+{
+	/*
+	@class ("PlayerManager")
+	{
+		@init_class("PlayerManager");
+
+		@var (OO_ARRAY[MAX_PLAYERS+1]:m_oPlayers);
+
+		@construct0 :Ctor();
+
+		@method :PlayerOfIndex(@cell); // Player:(id)
+		@method :IndexOfPlayer(@cell); // (Player:oPlayer)
+		@method :GetPlayerClass(@cell); // PlayerClass:(id)
+		
+		@method :Connect(@cell); // (id)
+		@method :Disconnect(@cell); // (id)
+
+		// bool:(id, channel, const sample[], Float:volume, Float:attn, flags, pitch)
+		@method :EmitSound(@cell, @cell, @string, @float, @float, @cell, @cell);
+		@method :ResetMaxSpeed(@cell); // bool:(id)
+		@method :ItemDeploy(@cell, @cell); // bool:(ent, player)
+		@method :Spawn(@cell); // (id)
+	}*/
+}
+
+ManagerInit()
+{
+	//g_oPlayerManager = any:@new0("PlayerManager");
+}
+
+PlayerManager_Connect(id)
+{
+	g_oPlayers[id] = any:@new("Player", id);
+}
+
+PlayerManager_Disconnect(id)
+{
+	if (g_oPlayers[id] != @null)
+	{
+		@delete (g_oPlayers[id]);
+		g_oPlayers[id] = @null;
+	}
+}
+
+bool:PlayerManager_EmitSound(id, channel, const sample[], Float:volume, Float:attn, flags, pitch)
+{
+	new PlayerClass:oClass = any:GetPlayerClass(id);
+	if (oClass == @null)
+		return false;
+
+	return bool:@call:oClass.ChangeSound(channel, sample, volume, attn, flags, pitch);
+}
+
+bool:PlayerManager_ResetMaxSpeed(id)
+{
+	new PlayerClass:oClass = any:GetPlayerClass(id);
+	if (oClass == @null)
+		return false;
+
+	return bool:@call0:oClass.SetMaxSpeed();
+}
+
+bool:PlayerManager_ItemDeploy(ent, id)
+{
+	new PlayerClass:oClass = any:GetPlayerClass(id);
+	if (oClass == @null)
+		return false;
+	
+	return bool:@call:oClass.SetWeaponModel(ent);
+}
+
+PlayerManager_Spawn(id)
+{
+	new PlayerClass:oClass = any:GetPlayerClass(id);
+	if (oClass == @null)
+		return;
+
+	@call0:oClass.SetProperties();
+}
+
+stock PlayerTeam:GetPlayerTeam(id)
+{
+	new Player:oPlayer = any:GetPlayerObj(id);
+	if (oPlayer == @null)
+		return Team_None;
+
+	return @get(oPlayer.m_Team);
+}
+
+stock Player:GetPlayerObj(id)
+{
+	if (!(1 <= id <= MaxClients)) // index out of bounds
+		return @null;
+	
+	return g_oPlayers[id];
+}
+
+stock GetPlayerIndex(Player:oPlayer)
+{
+	return @get(oPlayer.m_Index);
+}
+
+stock PlayerClass:GetPlayerClass(id)
+{
+	new Player:oPlayer = any:GetPlayerObj(id)
+	if (oPlayer == @null)
+		return @null;
+	
+	new PlayerClass:oClass = any:@get(oPlayer.m_oClass);
+	if (oClass == @null)
+		return @null;
+	
+	return oClass;
+}

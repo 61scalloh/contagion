@@ -6,67 +6,45 @@
 #include <fakemeta>
 #include <hamsandwich>
 #include <json>
+#include <orpheu>
+#include <orpheu_stocks>
 #include <oo>
 #include <contagion_const>
 
+#include "const.pwn"
+#include "language.pwn"
 #include "playerclass.pwn"
 #include "player.pwn"
-#include "manager.pwn"
+#include "gamerules.pwn"
 #include "amxx.pwn" // amxmodx
 #include "engine.pwn" // fakemeta or engine
 #include "ham.pwn" // hamsandwich
+#include "events.pwn"
+#include "messages.pwn"
+#include "commands.pwn"
 #include "utils.pwn"
 
 public oo_init()
 {
 	PlayerClassOO();
-	PlayerOO();
-	ManagerOO();
 }
 
 public plugin_precache()
 {
 	PlayerClassPrecache();
+	GameRulesPrecache();
 }
 
 public plugin_init()
 {
 	register_plugin("Contagion", "0.1", "peter5001");
 
-	register_clcmd("set_playerclass", "CmdSetPlayerClass");
-
+	LanguageInit();
 	PlayerClassInit()
-	ManagerInit();
+	GameRulesInit();
 	EngineInit();
 	HamInit();
-}
-
-public CmdSetPlayerClass(id)
-{
-	static arg[32];
-	read_argv(1, arg, charsmax(arg));
-
-	new player = cmd_target(id, arg);
-	if (!player)
-		return PLUGIN_HANDLED;
-	
-	static class[32];
-	read_argv(2, class, charsmax(class));
-
-	if (!oo_class_exists(class))
-	{
-		console_print(id, "Class does not exists.")
-		return PLUGIN_HANDLED;
-	}
-
-	if (!oo_subclass_of(class, "PlayerClass"))
-	{
-		console_print(id, "Invalid class.")
-		return PLUGIN_HANDLED;
-	}
-
-	new Player:oPlayer = any:@call:g_oPlayerManager.PlayerOfIndex(player);
-	@call :oPlayer.ChangeClass(class);
-	
-	return PLUGIN_HANDLED;
+	EventsInit();
+	MessagesInit();
+	CommandsInit();
 }

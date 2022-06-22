@@ -1,69 +1,98 @@
-#if defined _ctg_player_included
-	#endinput
-#endif
+new PlayerTeam:g_PlayerTeam[MAX_PLAYERS + 1];
+new PlayerClass:g_PlayerClass[MAX_PLAYERS + 1];
 
-#define _ctg_player_included
-
-PlayerOO()
+Player_Disconnect(id)
 {
-	@class ("Player")
-	{
-		@init_class("Player");
-
-		@var (OO_CELL:m_PlayerIndex);
-		@var (OO_CELL:m_Team); // PlayerTeam
-		@var (OO_CELL:m_oClass); // Obj
-
-		@construct :Ctor(@cell); // (player_id)
-		@destruct :Dtor();
-
-		@method0 :Connect();
-		@method0 :Disconnect();
-		@method  :ChangeClass(@string); // (const classname[])
-	}
+    g_PlayerTeam[id] = Team_None;
+    
+    if (g_PlayerClass[id] != @null)
+    {
+        @delete(g_PlayerClass[id]);
+        g_PlayerClass[id] = @null;
+    }
 }
 
-public Player@Ctor(player_id)
+bool:Player_EmitSound(id, channel, const sample[], Float:volume, Float:attn, flags, pitch)
 {
-	@init_this(this);
-	@set (this.m_PlayerIndex:  = player_id);
-	@set (this.m_Team:   = Team_None);
-	@set (this.m_oClass: = @null);
+	new PlayerClass:oClass = g_PlayerClass[id];
+	if (oClass == @null)
+		return false;
 
-	server_print("Player@Ctor()");
+	return bool:@call:oClass.ChangeSound(channel, sample, volume, attn, flags, pitch);
 }
 
-public Player@Dtor()
+bool:Player_ResetMaxSpeed(id)
 {
-	server_print("Player@Dtor()");
+	new PlayerClass:oClass = g_PlayerClass[id];
+	if (oClass == @null)
+		return false;
+
+	return bool:@call0:oClass.SetMaxSpeed();
 }
 
-// Change player class
-public Player@ChangeClass(const destClass[])
+bool:Player_ItemDeploy(ent, id)
 {
-	@init_this(this);
+	new PlayerClass:oClass = g_PlayerClass[id];
+	if (oClass == @null)
+		return false;
+	
+	return bool:@call:oClass.SetWeaponModel(ent);
+}
 
-	new PlayerClass:oClass = any:@get(this.m_oClass);
+Player_Spawned(id)
+{
+	GameRules_PlayerSpawned(id);
+
+	if (g_PlayerClass[id] != @null)
+		@call0:g_PlayerClass[id].SetProperties();
+}
+
+stock ChangePlayerClass(id, const destClass[])
+{
+	new PlayerClass:oClass = g_PlayerClass[id]
 	if (oClass != @null)
 	{
 		// delete old player class
 		@delete (oClass);
-		@set (this.m_oClass: = @null);
+		g_PlayerClass[id] = @null;
 	}
 
 	// safe check: if destClass is vaild
 	if (oo_class_exists(destClass) && oo_subclass_of(destClass, "PlayerClass"))
 	{
-		oClass = @new (destClass, this); // new object
-		@set (this.m_oClass: = oClass); // assign to the player
+		oClass = @new (destClass, id); // new object
+		g_PlayerClass[id] = oClass; // assign to the player
 
 		new PlayerClassInfo:o_info = any:@get(oClass.m_oClassInfo);
-		@set (this.m_Team: = @get(o_info.m_Team)); // set player team
+		g_PlayerTeam[id] = any:@get(o_info.m_Team); // set player team
 
 		@call0 :oClass.SetProperties(); // set player properties
 	}
+
+	GameRules_ChangePlayerClass(id);
 }
 
-// unused
-public Player@Connect() {}
-public Player@Disconnect() {}
+stock bool:PlayerIsA(id, const class[])
+{
+	if (g_PlayerClass[id] == @null)
+		return false;
+	
+	return oo_isa(g_PlayerClass[id], class);
+}
+
+stock SetPlayerClass(id, const class[])
+{
+	if (g_PlayerClass[id] != @null)
+	{
+		@delete(g_PlayerClass[id]);
+		g_PlayerClass[id] = @null;
+	}
+
+	g_PlayerClass[id] = @new(class, id);
+
+	new PlayerClassInfo:oInfo = any:@get(g_PlayerClass[id].m_oClassInfo);
+	if (oInfo != @null)
+	{
+		g_PlayerTeam[id] = any:@get(oInfo.m_Team);
+	}
+}

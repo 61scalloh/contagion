@@ -41,7 +41,7 @@ native oo_decl_dtor(const class[], const name[]);
 native oo_decl_msg(const class[], const name[], any:...);
 native oo_decl_ivar(const class[], const name[], size);
 
-native oo_isa(any:this, const _super[]);
+native bool:oo_isa(any:this, const _super[]);
 native bool:oo_subclass_of(const sub[], const _super[]);
 native bool:oo_class_exists(const class[]);
 native oo_get_class_name(any:this, classname[], len);
